@@ -63,6 +63,61 @@ body[data-accent="plum"]  { --accent: var(--plum);  --accent-deep: #5A2A3D;     
 
 body[data-density="cozy"] { --gap-floor: 40px; }
 
+/* Dark mode — deep warm charcoal, tetap premium */
+body[data-theme="dark"] {
+  --cream:       #16120E;
+  --cream-2:     #1E1914;
+  --paper:       #241F19;
+  --ink:         #F0E8D8;
+  --ink-2:       #D4C9B4;
+  --ink-soft:    #7A706A;
+  --line:        #2E2720;
+  --line-strong: #4A3E33;
+
+  --occupied-bg: rgba(43,100,101,0.22);
+  --occupied-fg: #9ECACB;
+  --clean-bg:    rgba(184,138,61,0.18);
+  --clean-fg:    #D4AA55;
+  --dirty-bg:    rgba(200,85,61,0.18);
+  --dirty-fg:    #E8927A;
+  --reserved-bg: rgba(122,59,82,0.18);
+  --reserved-fg: #C48EAA;
+  --maint-bg:    rgba(92,85,74,0.18);
+  --maint-fg:    #B5ADA0;
+}
+
+body[data-theme="dark"]::before {
+  background-image: radial-gradient(circle at 1px 1px, rgba(244,237,224,0.025) 1px, transparent 1.2px);
+}
+
+/* Dark mode: active summary card — bg jadi cream (--ink), teks subdued harus gelap bukan cream */
+body[data-theme="dark"] .wp-summary-card[data-active="true"] .wp-summary-eyebrow,
+body[data-theme="dark"] .wp-summary-card[data-active="true"] .wp-summary-foot,
+body[data-theme="dark"] .wp-summary-card[data-active="true"] .wp-summary-head { color: rgba(33,27,21,0.5); }
+
+/* Dark mode: bottom nav — gunakan surface gelap, bukan --ink yang jadi terang */
+body[data-theme="dark"] .wp-bottomnav-inner {
+  background: #2A2420;
+  color: var(--ink);
+  box-shadow: 0 14px 40px -8px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.3), inset 0 0 0 1px var(--line-strong);
+}
+body[data-theme="dark"] .wp-bn-item { color: rgba(240,232,216,0.4); }
+body[data-theme="dark"] .wp-bn-item[data-active="true"] { background: rgba(240,232,216,0.08); color: var(--ink); }
+
+/* Dark mode: shadow overrides — dark shadow tak terlihat di bg gelap */
+body[data-theme="dark"] .wp-room:hover {
+  box-shadow: inset 0 0 0 1px var(--line-strong), 0 8px 24px -8px rgba(0,0,0,0.45);
+}
+body[data-theme="dark"] .wp-tweaks {
+  box-shadow: 0 18px 50px -8px rgba(0,0,0,0.6), inset 0 0 0 1px var(--line-strong);
+}
+body[data-theme="dark"] .wp-sheet {
+  box-shadow: 0 -8px 40px rgba(0,0,0,0.5);
+}
+body[data-theme="dark"] .wp-summary-card:hover {
+  box-shadow: inset 0 0 0 1px var(--line-strong), 0 6px 18px -6px rgba(0,0,0,0.4);
+}
+
 /* ============================================================
    RESET
    ============================================================ */

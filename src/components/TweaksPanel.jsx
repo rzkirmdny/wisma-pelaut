@@ -78,6 +78,18 @@ export default function TweaksPanel({ open, onClose, values, setValues }) {
             ))}
           </div>
         </div>
+
+        <div className="wp-tweak-row" style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <label className="wp-tweak-label" style={{ marginBottom: 0 }}>Mode Gelap</label>
+          <button
+            className="wp-tweak-toggle"
+            data-on={values.isDarkMode}
+            onClick={() => update('isDarkMode', !values.isDarkMode)}
+            aria-label="Toggle mode gelap"
+          >
+            <span />
+          </button>
+        </div>
       </div>
     </div>
   )

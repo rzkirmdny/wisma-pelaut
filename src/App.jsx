@@ -12,6 +12,7 @@ const TWEAK_DEFAULTS = {
   showRoomNumbers: true,
   accent: 'terracotta',
   density: 'compact',
+  isDarkMode: false,
 }
 
 const NAV_ITEMS = [
@@ -81,15 +82,22 @@ function Sidebar({ page, setPage, onTweaks }) {
 
 export default function App() {
   const [page, setPage] = useState(() => localStorage.getItem('wp:page') || 'kamar')
-  const [tweaks, setTweaks] = useState(TWEAK_DEFAULTS)
+  const [tweaks, setTweaks] = useState(() => {
+    try {
+      const stored = localStorage.getItem('wp:tweaks')
+      return stored ? { ...TWEAK_DEFAULTS, ...JSON.parse(stored) } : TWEAK_DEFAULTS
+    } catch { return TWEAK_DEFAULTS }
+  })
   const [tweaksOpen, setTweaksOpen] = useState(false)
 
   useEffect(() => { localStorage.setItem('wp:page', page) }, [page])
 
   useEffect(() => {
+    localStorage.setItem('wp:tweaks', JSON.stringify(tweaks))
     document.body.dataset.tone    = tweaks.bgTone
     document.body.dataset.accent  = tweaks.accent
     document.body.dataset.density = tweaks.density
+    document.body.dataset.theme   = tweaks.isDarkMode ? 'dark' : 'light'
     document.documentElement.style.setProperty('--card-radius', tweaks.cardRadius + 'px')
   }, [tweaks])
 

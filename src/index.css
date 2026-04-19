@@ -105,6 +105,7 @@ body::before {
   position: relative; z-index: 1;
   display: flex;
   min-height: 100vh;
+  padding-top: env(safe-area-inset-top);
 }
 
 .wp-main { flex: 1; min-width: 0; }

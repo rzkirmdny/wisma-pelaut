@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import KamarCard from '../components/KamarCard'
 import RoomSheet from '../components/RoomSheet'
 import { Icons } from '../components/Icon'
+import { formatKamarName } from '../lib/utils'
 
 const STATUS_ORDER = ['occupied', 'vacant_clean', 'vacant_dirty', 'reserved', 'maintenance']
 
@@ -14,14 +15,12 @@ const STATUS_META = {
   PERBAIKAN:   { key: 'maintenance',  short: 'Perbaikan',    dot: 'var(--maint)' },
 }
 
-const ROMAN = ['I', 'II', 'III']
+const ROMAN = ['Bawah', 'Atas']
 
-function getFloor(nomor) {
-  const n = Number(nomor)
-  if (n >= 100) return Math.floor(n / 100)
-  if (n <= 10)  return 1
-  if (n <= 20)  return 2
-  return 3
+function getFloor(kamar) {
+  const n = Number(kamar.nomor_kamar)
+  if (n > 9) return 2
+  return 1 // default bawah
 }
 
 function numToWords(n) {
@@ -51,13 +50,48 @@ export default function KamarPage({ tweaks = {} }) {
     const { error } = await supabase.from('kamar').update({
       status: 'TERISI',
       nama_tamu: formData.nama_tamu,
+      no_telepon: formData.no_telepon,
       tanggal_checkin: formData.tanggal_checkin,
       tanggal_checkout: formData.tanggal_checkout,
       jumlah_malam: formData.jumlah_malam,
       harga_per_malam: formData.harga_per_malam,
       total_harga: formData.total_harga,
+      occupancy: formData.occupancy,
     }).eq('id', selected.id)
     if (error) { alert('Gagal check-in: ' + error.message); return }
+    setSelected(null); fetchKamar()
+  }
+
+  const handlePesan = async (formData) => {
+    const { error } = await supabase.from('kamar').update({
+      status: 'DIPESAN',
+      nama_tamu: formData.nama_tamu,
+      no_telepon: formData.no_telepon,
+      tanggal_checkin: formData.tanggal_checkin,
+      tanggal_checkout: formData.tanggal_checkout,
+      jumlah_malam: formData.jumlah_malam,
+      harga_per_malam: formData.harga_per_malam,
+      total_harga: formData.total_harga,
+      occupancy: formData.occupancy,
+    }).eq('id', selected.id)
+    if (error) { alert('Gagal memproses pesanan: ' + error.message); return }
+    setSelected(null); fetchKamar()
+  }
+
+  const handleBatalPesan = async () => {
+    if (!window.confirm(`Batalkan pesanan untuk ${selected.nama_tamu}?`)) return;
+    const { error } = await supabase.from('kamar').update({
+      status: 'SIAP_HUNI',
+      nama_tamu: null,
+      no_telepon: null,
+      tanggal_checkin: null,
+      tanggal_checkout: null,
+      jumlah_malam: null,
+      harga_per_malam: null,
+      total_harga: null,
+      occupancy: null,
+    }).eq('id', selected.id)
+    if (error) { alert('Gagal membatalkan pesanan: ' + error.message); return }
     setSelected(null); fetchKamar()
   }
 
@@ -66,11 +100,13 @@ export default function KamarPage({ tweaks = {} }) {
     const { error: txError } = await supabase.from('transaksi').insert({
       nomor_kamar: selected.nomor_kamar,
       nama_tamu: selected.nama_tamu,
+      no_telepon: selected.no_telepon,
       tanggal_checkin: selected.tanggal_checkin,
       tanggal_checkout: selected.tanggal_checkout,
       jumlah_malam: selected.jumlah_malam,
       harga_per_malam: selected.harga_per_malam,
       total_harga: selected.total_harga,
+      occupancy: selected.occupancy,
     })
     if (txError) { alert('Gagal mencatat transaksi: ' + txError.message); return }
 
@@ -78,11 +114,13 @@ export default function KamarPage({ tweaks = {} }) {
     const { error: upError } = await supabase.from('kamar').update({
       status: 'PEMBERSIHAN',
       nama_tamu: null,
+      no_telepon: null,
       tanggal_checkin: null,
       tanggal_checkout: null,
       jumlah_malam: null,
       harga_per_malam: null,
       total_harga: null,
+      occupancy: null,
     }).eq('id', selected.id)
     if (upError) { alert('Gagal update status kamar: ' + upError.message); return }
 
@@ -95,11 +133,13 @@ export default function KamarPage({ tweaks = {} }) {
     const { error } = await supabase.from('transaksi').insert({
       nomor_kamar: selected.nomor_kamar,
       nama_tamu: selected.nama_tamu,
+      no_telepon: selected.no_telepon,
       tanggal_checkin: selected.tanggal_checkin,
       tanggal_checkout: selected.tanggal_checkout,
       jumlah_malam: selected.jumlah_malam,
       harga_per_malam: selected.harga_per_malam,
       total_harga: selected.total_harga,
+      occupancy: selected.occupancy,
     })
     if (error) { alert('Gagal mencatat pembayaran: ' + error.message); return }
     setSelected(null)
@@ -122,11 +162,13 @@ export default function KamarPage({ tweaks = {} }) {
     const { error: txErr } = await supabase.from('transaksi').insert({
       nomor_kamar: kamar.nomor_kamar,
       nama_tamu: kamar.nama_tamu,
+      no_telepon: kamar.no_telepon,
       tanggal_checkin: kamar.tanggal_checkin,
       tanggal_checkout: newCheckoutStr,
       jumlah_malam: extraNights,
       harga_per_malam: kamar.harga_per_malam,
       total_harga: extraNights * (kamar.harga_per_malam || 150000),
+      occupancy: kamar.occupancy,
     })
     if (txErr) { alert('Gagal mencatat perpanjangan: ' + txErr.message); return }
 
@@ -146,7 +188,8 @@ export default function KamarPage({ tweaks = {} }) {
       if (filter !== 'all' && STATUS_META[k.status]?.key !== filter) return false
       if (query) {
         const q = query.toLowerCase()
-        if (!String(k.nomor_kamar).includes(q) && !(k.nama_tamu || '').toLowerCase().includes(q) && !(k.asal || '').toLowerCase().includes(q)) return false
+        const kName = formatKamarName(k.nomor_kamar).toLowerCase()
+        if (!kName.includes(q) && !(k.nama_tamu || '').toLowerCase().includes(q) && !(k.no_telepon || '').toLowerCase().includes(q)) return false
       }
       return true
     })
@@ -156,7 +199,7 @@ export default function KamarPage({ tweaks = {} }) {
   const floors = useMemo(() => {
     const map = {}
     for (const k of filtered) {
-      const f = getFloor(k.nomor_kamar)
+      const f = getFloor(k)
       if (!map[f]) map[f] = []
       map[f].push(k)
     }
@@ -202,17 +245,33 @@ export default function KamarPage({ tweaks = {} }) {
     { key: 'vacant_clean', label: 'Bersih',     count: cleanCnt,    dot: 'var(--clean)',      icon: 'Check' },
     { key: 'vacant_dirty', label: 'Kotor',      count: dirtyCnt,    dot: 'var(--dirty)',      icon: 'Broom' },
     { key: 'reserved',     label: 'Dipesan',    count: reservedCnt, dot: 'var(--reserved)',   icon: 'Calendar' },
-    { key: 'maintenance',  label: 'Perbaikan',  count: maintCnt,    dot: 'var(--maint)',      icon: 'Dots' },
+    { key: 'maintenance',  label: 'Perbaikan',  count: maintCnt,    dot: 'var(--maint)',      icon: 'Wrench' },
   ]
 
   return (
     <>
       <div className="wp-page">
         {/* Top bar */}
-        <div className="wp-topbar">
-          <div>
-            <div className="wp-page-eyebrow">· {dateStr.toUpperCase()}</div>
-            <div className="wp-page-title">{greeting}</div>
+        <header className="wp-topbar">
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap' }}>
+              <h1 style={{
+                fontFamily: 'var(--serif)',
+                fontSize: 40,
+                fontWeight: 500,
+                letterSpacing: '-0.025em',
+                color: 'var(--ink)',
+                margin: 0,
+                lineHeight: 1,
+              }}>{greeting}</h1>
+              <div style={{
+                fontFamily: 'var(--mono)',
+                fontSize: 11,
+                letterSpacing: '0.1em',
+                color: 'var(--ink-soft)',
+                textTransform: 'uppercase',
+              }}>· {dateStr.toUpperCase()}</div>
+            </div>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <button className="wp-icon-btn"><Icons.Search size={18} /></button>
@@ -223,10 +282,10 @@ export default function KamarPage({ tweaks = {} }) {
               if (avail) setSelected(avail)
               else alert('Tidak ada kamar tersedia.')
             }}>
-              + Check-in baru
+              <Icons.Plus size={16} /> Check-in baru
             </button>
           </div>
-        </div>
+        </header>
 
         {/* Lede */}
         <p className="wp-page-lede">
@@ -255,11 +314,15 @@ export default function KamarPage({ tweaks = {} }) {
                 </div>
                 <div className="wp-summary-num">{count}</div>
                 <div className="wp-summary-foot">
-                  <span style={{ fontFamily: 'var(--mono)' }}>{pct}%</span>
-                  {dot && (
-                    <div className="wp-summary-bar">
-                      <div className="wp-summary-bar-fill" style={{ width: `${pct}%`, '--bar-color': dot }} />
-                    </div>
+                  {key === 'all' ? (
+                    <span>kamar aktif</span>
+                  ) : (
+                    <>
+                      <span style={{ fontFamily: 'var(--mono)' }}>{pct}%</span>
+                      <span style={{ flex: 1, height: 2, background: 'var(--line)', borderRadius: 2, position: 'relative', overflow: 'hidden' }}>
+                        <span style={{ position: 'absolute', inset: 0, width: `${pct}%`, background: dot, borderRadius: 2 }} />
+                      </span>
+                    </>
                   )}
                 </div>
               </button>
@@ -272,7 +335,7 @@ export default function KamarPage({ tweaks = {} }) {
           <div className="wp-search">
             <Icons.Search size={15} />
             <input
-              placeholder="Cari no. kamar, nama tamu, atau asal…"
+              placeholder="Cari no. kamar, nama tamu, atau no. telepon…"
               value={query}
               onChange={e => setQuery(e.target.value)}
             />
@@ -294,15 +357,19 @@ export default function KamarPage({ tweaks = {} }) {
         <div key={filter + query} className="kamar-grid-wrap">
           {floorKeys.length === 0 ? (
             <div className="wp-room-grid">
-              <div className="wp-room-empty">Tidak ada kamar yang cocok.</div>
+              <div className="wp-room-empty" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '48px 16px' }}>
+                <Icons.Search size={32} style={{ color: 'var(--ink-soft)', opacity: 0.5, marginBottom: 8 }} />
+                <div style={{ fontFamily: 'var(--serif)', fontSize: 18, color: 'var(--ink)' }}>Kamar Tidak Ditemukan</div>
+                <div style={{ fontSize: 13 }}>Coba gunakan kata kunci pencarian yang lain atau hapus filter status di atas.</div>
+              </div>
             </div>
           ) : (
             floorKeys.map(floor => (
               <section key={floor} className="wp-floor">
                 <div className="wp-floor-header">
                   <div className="wp-floor-label">
-                    <span className="wp-floor-roman">{ROMAN[floor - 1] || floor}</span>
-                    <span>Lantai {floor}</span>
+                    <span className="wp-floor-roman">Lantai</span>
+                    <span>{ROMAN[floor - 1] || floor}</span>
                   </div>
                   <div className="wp-floor-meta">{floors[floor].length} kamar</div>
                   <div className="wp-floor-rule" />
@@ -333,6 +400,8 @@ export default function KamarPage({ tweaks = {} }) {
           onCatatPembayaran={handleCatatPembayaran}
           onBersih={handleBersih}
           onPerpanjang={handlePerpanjang}
+          onPesan={handlePesan}
+          onBatalPesan={handleBatalPesan}
           onClose={() => setSelected(null)}
         />
       )}

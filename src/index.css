@@ -63,17 +63,8 @@ body[data-accent="plum"]  { --accent: var(--plum);  --accent-deep: #5A2A3D;     
 
 body[data-density="cozy"] { --gap-floor: 40px; }
 
-/* Dark mode — deep warm charcoal, tetap premium */
+/* Dark mode base (status colors) */
 body[data-theme="dark"] {
-  --cream:       #16120E;
-  --cream-2:     #1E1914;
-  --paper:       #241F19;
-  --ink:         #F0E8D8;
-  --ink-2:       #D4C9B4;
-  --ink-soft:    #7A706A;
-  --line:        #2E2720;
-  --line-strong: #4A3E33;
-
   --occupied-bg: rgba(43,100,101,0.22);
   --occupied-fg: #9ECACB;
   --clean-bg:    rgba(184,138,61,0.18);
@@ -84,6 +75,43 @@ body[data-theme="dark"] {
   --reserved-fg: #C48EAA;
   --maint-bg:    rgba(92,85,74,0.18);
   --maint-fg:    #B5ADA0;
+}
+
+/* Dark mode — Warm (Hangat) */
+body[data-theme="dark"][data-tone="warm"],
+body[data-theme="dark"]:not([data-tone]) {
+  --cream:       #1A1510;
+  --cream-2:     #221C15;
+  --paper:       #2A2318;
+  --ink:         #F0E4CC;
+  --ink-2:       #D4C5A8;
+  --ink-soft:    #8A7D6A;
+  --line:        #342B20;
+  --line-strong: #4D4030;
+}
+
+/* Dark mode — Cool (Sejuk) */
+body[data-theme="dark"][data-tone="cool"] {
+  --cream:       #0F1419;
+  --cream-2:     #151C23;
+  --paper:       #1A222B;
+  --ink:         #D8E4EE;
+  --ink-2:       #B4C5D4;
+  --ink-soft:    #687A8A;
+  --line:        #1E2A35;
+  --line-strong: #2E3E4D;
+}
+
+/* Dark mode — Paper (Kertas) */
+body[data-theme="dark"][data-tone="paper"] {
+  --cream:       #161615;
+  --cream-2:     #1E1E1C;
+  --paper:       #262624;
+  --ink:         #E8E4DC;
+  --ink-2:       #CCC8BE;
+  --ink-soft:    #7A7870;
+  --line:        #2E2E2A;
+  --line-strong: #444440;
 }
 
 body[data-theme="dark"]::before {
@@ -139,20 +167,31 @@ body {
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "ss01", "cv11";
+  transition: background 0.3s ease, color 0.3s ease;
 }
 button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; padding: 0; }
 input, select, textarea { font-family: inherit; }
 a { color: inherit; text-decoration: none; }
 
-body::before {
-  content: "";
-  position: fixed; inset: 0;
-  background-image: radial-gradient(circle at 1px 1px, rgba(33,27,21,0.04) 1px, transparent 1.2px);
-  background-size: 22px 22px;
-  pointer-events: none;
-  z-index: 0;
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
-
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 999px;
+  border: 2px solid var(--cream);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-soft);
+}
+body[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  border: 2px solid var(--paper);
+}
 /* ============================================================
    LAYOUT
    ============================================================ */
@@ -180,7 +219,6 @@ body::before {
 
 .wp-sidebar-brand {
   padding: 28px 24px 20px;
-  border-bottom: 1px solid var(--line);
 }
 
 .wp-brand-logo {
@@ -265,7 +303,9 @@ body::before {
 
 .wp-bottomnav-inner {
   pointer-events: auto;
-  background: var(--ink);
+  background: rgba(33, 27, 21, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   color: var(--cream);
   border-radius: 999px;
   padding: 8px;
@@ -324,7 +364,6 @@ body::before {
   letter-spacing: -0.04em;
   color: var(--ink);
   line-height: 1;
-  font-style: italic;
   font-weight: 500;
 }
 @media (max-width: 899px) { .wp-page-title { font-size: 28px; } }
@@ -663,10 +702,12 @@ body::before {
    ============================================================ */
 .wp-sheet-backdrop {
   position: fixed; inset: 0;
-  background: rgba(33,27,21,0.32);
+  background: rgba(15, 12, 10, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 50;
   display: grid; place-items: end center;
-  animation: wp-fade 0.15s ease;
+  animation: wp-fade 0.2s ease;
 }
 @media (min-width: 768px) { .wp-sheet-backdrop { place-items: center; } }
 
@@ -775,9 +816,16 @@ body::before {
   width: 100%; padding: 11px 14px;
   background: var(--cream); border: 1px solid var(--line);
   border-radius: 12px; font-size: 15px; color: var(--ink);
-  outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
 }
-.wp-form-input:focus { border-color: var(--terracotta); box-shadow: 0 0 0 3px var(--terracotta-soft); }
+.wp-form-input:focus {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(33, 27, 21, 0.1);
+}
+body[data-theme="dark"] .wp-form-input:focus {
+  box-shadow: 0 0 0 3px rgba(244, 237, 224, 0.15);
+}
+
 
 .wp-kalkulasi {
   background: var(--cream-2); border-radius: 14px;

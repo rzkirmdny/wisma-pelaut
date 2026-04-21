@@ -19,7 +19,7 @@ const NAV_ITEMS = [
   { id: 'kamar',   label: 'Kamar',   Icon: Icons.Grid },
   { id: 'rekap',   label: 'Rekap',   Icon: Icons.Wallet },
   { id: 'riwayat', label: 'Riwayat', Icon: Icons.Clock },
-  { id: 'tweaks',  label: 'Tampilan',Icon: Icons.Sliders },
+  { id: 'lainnya', label: 'Lainnya', Icon: Icons.Menu },
 ]
 
 function Brand({ compact }) {
@@ -43,7 +43,7 @@ function Sidebar({ page, setPage, onTweaks }) {
         <Brand />
       </div>
       <nav className="wp-sidebar-nav">
-        {NAV_ITEMS.filter(i => i.id !== 'tweaks').map(({ id, label, Icon }) => {
+        {NAV_ITEMS.map(({ id, label, Icon }) => {
           const active = page === id
           return (
             <button
@@ -114,6 +114,54 @@ export default function App() {
         {page === 'kamar'   && <KamarPage tweaks={tweaks} />}
         {page === 'rekap'   && <RekapPage onOpenRiwayat={() => setPage('riwayat')} />}
         {page === 'riwayat' && <RiwayatPage onBack={() => setPage('rekap')} />}
+        {page === 'lainnya' && (
+          <div className="wp-page">
+            <header className="wp-topbar">
+              <div style={{ flex: 1 }}>
+                <h1 style={{ fontFamily: 'var(--serif)', fontSize: 40, fontWeight: 500, letterSpacing: '-0.025em', color: 'var(--ink)', margin: 0, lineHeight: 1 }}>Lainnya</h1>
+              </div>
+            </header>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+              {[
+                { icon: Icons.Sliders, label: 'Tampilan', sub: 'Tema, warna aksen, densitas', action: () => setTweaksOpen(true) },
+                { icon: Icons.Users, label: 'Data Tamu', sub: 'Segera hadir', action: null },
+                { icon: Icons.Trend, label: 'Laporan Bulanan', sub: 'Segera hadir', action: null },
+              ].map(({ icon: Ico, label, sub, action }) => (
+                <button
+                  key={label}
+                  onClick={action}
+                  disabled={!action}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 16,
+                    padding: '16px 20px',
+                    background: 'var(--paper)',
+                    border: '1px solid var(--line)',
+                    borderRadius: 'var(--card-radius, 16px)',
+                    cursor: action ? 'pointer' : 'default',
+                    opacity: action ? 1 : 0.5,
+                    textAlign: 'left',
+                    transition: 'box-shadow 0.15s',
+                  }}
+                >
+                  <div style={{
+                    width: 42, height: 42, borderRadius: 12,
+                    background: 'var(--cream-2)',
+                    display: 'grid', placeItems: 'center',
+                    color: 'var(--ink)',
+                    flexShrink: 0,
+                  }}>
+                    <Ico size={20} />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 15, color: 'var(--ink)' }}>{label}</div>
+                    <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 2 }}>{sub}</div>
+                  </div>
+                  {action && <Icons.Arrow size={16} style={{ marginLeft: 'auto', color: 'var(--ink-soft)' }} />}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
 
       <nav className="wp-bottomnav">
@@ -122,7 +170,7 @@ export default function App() {
             <button
               key={id}
               className="wp-bn-item"
-              data-active={(id === 'tweaks' ? tweaksOpen : page === id) ? 'true' : 'false'}
+              data-active={page === id ? 'true' : 'false'}
               onClick={() => handleNav(id)}
             >
               <Icon size={20} stroke={page === id ? 1.8 : 1.5} />
